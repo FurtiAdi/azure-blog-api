@@ -61,5 +61,36 @@ def get_post(post_id):
     return jsonify(items[0]), 200
 
 
+# DELETE BY ID
+@app.route("/posts/<post_id>", methods=["DELETE"])
+def delete_post(post_id):
+    query = "SELECT * FROM c WHERE c.id = @id"
+
+    parameters = [
+        {"name": "@id", "value": post_id}
+    ]
+
+    items = list(container.query_items(
+        query=query,
+        parameters=parameters,
+        enable_cross_partition_query=True
+    ))
+
+    if not items:
+        return jsonify({"error": "Post not found"}), 404
+
+    post = items[0]
+
+    container.delete_item(
+        item=post["id"],
+        partition_key=post["author"]
+    )
+
+    return jsonify({"message": "Post deleted successfully"}), 200
+
+
+
+
+
 if __name__ == "__main__":
     app.run(debug=True)
